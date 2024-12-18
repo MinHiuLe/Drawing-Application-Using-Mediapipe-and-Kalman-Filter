@@ -29,7 +29,7 @@ This project implements a real-time drawing application that allows users to dra
 
 2. **Run the Application:**
    ```bash
-   python main.py
+   python draw.py
    ```
 
 ---
