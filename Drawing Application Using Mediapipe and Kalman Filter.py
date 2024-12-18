@@ -4,27 +4,23 @@ import numpy as np
 from datetime import datetime
 import time
 
-# Initialize Mediapipe Hand Tracking
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-# Kalman Filter Setup
 kalman = cv2.KalmanFilter(4, 2)
 kalman.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
 kalman.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
 kalman.processNoiseCov = np.array([[1e-4, 0, 0, 0], [0, 1e-4, 0, 0], [0, 0, 1e-4, 0], [0, 0, 0, 1e-4]], np.float32)
 kalman.measurementNoiseCov = np.array([[1e-1, 0], [0, 1e-1]], np.float32)
 
-# Global Variables
-pen_color = (0, 255, 0)  # Default green
+pen_color = (0, 255, 0)
 pen_thickness = 4
 canvas = None
-frame_interval = 1 / 30  # Target 30 FPS
-window_width, window_height = 1280, 720  # Default window size
+frame_interval = 1 / 30  
+window_width, window_height = 1280, 720  
 message = ""
 message_time = 0
 
-# Function to apply Kalman filter
 def apply_kalman_filter(prev_coords, current_coords):
     if prev_coords is None:
         return current_coords
@@ -32,7 +28,6 @@ def apply_kalman_filter(prev_coords, current_coords):
     prediction = kalman.predict()
     return int(prediction[0][0]), int(prediction[1][0])
 
-# Function to process hand drawing
 def process_hand(frame, results, is_drawing, prev_coords):
     global canvas, pen_color, pen_thickness
 
@@ -43,7 +38,6 @@ def process_hand(frame, results, is_drawing, prev_coords):
             x = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * frame.shape[1])
             y = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * frame.shape[0])
 
-            # Apply Kalman filter to smooth the coordinates
             smoothed_coords = apply_kalman_filter(prev_coords, (x, y))
 
             if is_drawing:
@@ -57,9 +51,8 @@ def process_hand(frame, results, is_drawing, prev_coords):
 
     return prev_coords
 
-# Function to display temporary messages
 def display_message(frame, message, message_time):
-    if time.time() - message_time < 1.5:  # Display message for 1.5 seconds
+    if time.time() - message_time < 1.5:
         cv2.putText(frame, message, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
 # Function to handle user input
@@ -74,15 +67,15 @@ def handle_user_input(key, is_drawing):
         message = "Canvas Cleared"
         message_time = time.time()
     elif key == ord('r'):
-        pen_color = (0, 0, 255)  # Red
+        pen_color = (0, 0, 255)  
         message = "Pen Color: Red"
         message_time = time.time()
     elif key == ord('g'):
-        pen_color = (0, 255, 0)  # Green
+        pen_color = (0, 255, 0)  
         message = "Pen Color: Green"
         message_time = time.time()
     elif key == ord('b'):
-        pen_color = (255, 0, 0)  # Blue
+        pen_color = (255, 0, 0)  
         message = "Pen Color: Blue"
         message_time = time.time()
     elif key == ord('+') and pen_thickness < 10:
@@ -93,11 +86,10 @@ def handle_user_input(key, is_drawing):
         pen_thickness -= 1
         message = f"Pen Thickness: {pen_thickness}"
         message_time = time.time()
-    elif key == 27:  # ESC to exit
+    elif key == 27: 
         return 'exit', is_drawing
     return None, is_drawing
 
-# Function to process the video frame and perform drawing
 def video_loop(cap, hands):
     global canvas, message, message_time
     is_drawing = False
@@ -117,29 +109,23 @@ def video_loop(cap, hands):
 
         frame = cv2.flip(frame, 1)
 
-        # Resize frame to match the window size
         frame = cv2.resize(frame, (window_width, window_height))
         height, width, _ = frame.shape
 
         if canvas is None:
             canvas = np.zeros((height, width, 3), dtype=np.uint8)
 
-        # Convert to RGB and process hand landmarks
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(rgb_frame)
 
         prev_coords = process_hand(frame, results, is_drawing, prev_coords)
 
-        # Blend the canvas with the frame
         blended = cv2.addWeighted(frame, 0.5, canvas, 0.5, 0)
 
-        # Display temporary messages
         display_message(blended, message, message_time)
 
-        # Display the blended frame
         cv2.imshow("Drawing App", blended)
 
-        # Handle user input
         key = cv2.waitKey(1) & 0xFF
         action, is_drawing = handle_user_input(key, is_drawing)
         if action == 'exit':
@@ -148,7 +134,6 @@ def video_loop(cap, hands):
     cap.release()
     cv2.destroyAllWindows()
 
-# Main function
 def main():
     global canvas, window_width, window_height
 
@@ -157,18 +142,16 @@ def main():
         print("Cannot open webcam.")
         return
 
-    # Dynamically get the webcam resolution and adjust window size
     window_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     window_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cv2.namedWindow("Drawing App", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Drawing App", window_width, window_height)
 
-    # Set OpenCV threading for better performance
     cv2.setNumThreads(4)
 
     with mp_hands.Hands(
-        static_image_mode=False,  # Faster video processing
-        max_num_hands=1,          # Detect only one hand
+        static_image_mode=False,
+        max_num_hands=1,        
         min_detection_confidence=0.7,
         min_tracking_confidence=0.7) as hands:
 
