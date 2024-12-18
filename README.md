@@ -21,20 +21,13 @@ This project implements a real-time drawing application that allows users to dra
 ---
 
 ## Installation
-
-1. **Clone the Repository:**
-   ```bash
-   git clone <repository_url>
-   cd <repository_folder>
-   ```
-
-2. **Install Dependencies:**
+1. **Install Dependencies:**
    Make sure you have Python installed, then run:
    ```bash
    pip install opencv-python mediapipe numpy
    ```
 
-3. **Run the Application:**
+2. **Run the Application:**
    ```bash
    python main.py
    ```
